@@ -19,7 +19,7 @@ export function mountDetailPanel(root, opts) {
         <div class="mb-4 flex items-start justify-between gap-3">
           <div>
             <p class="text-[10px] uppercase tracking-[0.35em] text-apz-muted" data-panel-kicker></p>
-            <h2 class="font-display mt-1 text-xl font-bold leading-tight text-apz-ink md:text-2xl" data-title></h2>
+            <h2 class="font-display mt-1 text-xl font-bold leading-tight text-apz-ink md:text-2xl" tabindex="-1" data-title></h2>
             <p class="mt-1 font-mono text-xs text-apz-glow" data-date></p>
           </div>
           <button
@@ -45,6 +45,18 @@ export function mountDetailPanel(root, opts) {
   const relatedEl = root.querySelector('[data-related]');
   const closeBtn = /** @type {HTMLButtonElement | null} */ (root.querySelector('[data-close]'));
 
+  let hadEntry = false;
+  /** @type {HTMLElement | null} */
+  let restoreFocusEl = null;
+
+  function restorePreviousFocus() {
+    const el = restoreFocusEl;
+    restoreFocusEl = null;
+    requestAnimationFrame(() => {
+      if (el && document.contains(el)) el.focus();
+    });
+  }
+
   function render() {
     const ui = getBundle(getState().locale).ui;
     if (kickerEl) kickerEl.textContent = ui.panelKicker;
@@ -57,16 +69,21 @@ export function mountDetailPanel(root, opts) {
     const entry = selectedId ? getEntry(selectedId) : null;
 
     if (!entry) {
+      if (hadEntry) restorePreviousFocus();
+      hadEntry = false;
       root.classList.add('hidden', 'lg:hidden');
       wrap.classList.add('invisible', 'opacity-0', 'pointer-events-none');
       wrap.classList.remove('apz-panel-enter');
-      titleEl.textContent = '';
-      dateEl.textContent = '';
-      excerptEl.textContent = '';
-      bodyEl.textContent = '';
-      relatedEl.textContent = '';
+      if (titleEl) titleEl.textContent = '';
+      if (dateEl) dateEl.textContent = '';
+      if (excerptEl) excerptEl.textContent = '';
+      if (bodyEl) bodyEl.textContent = '';
+      if (relatedEl) relatedEl.textContent = '';
       return;
     }
+
+    const opening = !hadEntry;
+    hadEntry = true;
 
     root.classList.remove('hidden', 'lg:hidden');
 
@@ -78,17 +95,27 @@ export function mountDetailPanel(root, opts) {
       wrap.classList.add('apz-panel-enter');
     }
 
-    titleEl.textContent = entry.title;
-    dateEl.textContent = entry.date;
-    excerptEl.textContent = entry.excerpt;
-    bodyEl.textContent = entry.body;
+    if (titleEl) titleEl.textContent = entry.title;
+    if (dateEl) dateEl.textContent = entry.date;
+    if (excerptEl) excerptEl.textContent = entry.excerpt;
+    if (bodyEl) bodyEl.textContent = entry.body;
 
     const related = entry.relatedIds
       .map((id) => getEntry(id))
       .filter(Boolean)
       .map((e) => e.title);
-    relatedEl.textContent =
-      related.length > 0 ? `${ui.relatedPrefix}${related.join(' · ')}` : ui.noRelated;
+    if (relatedEl) {
+      relatedEl.textContent =
+        related.length > 0 ? `${ui.relatedPrefix}${related.join(' · ')}` : ui.noRelated;
+    }
+
+    if (opening) {
+      const active = document.activeElement;
+      restoreFocusEl =
+        active instanceof HTMLElement && active !== document.body ? active : null;
+      const title = /** @type {HTMLElement | null} */ (titleEl);
+      requestAnimationFrame(() => title?.focus());
+    }
   }
 
   function handleClose() {

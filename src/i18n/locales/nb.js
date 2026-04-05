@@ -40,7 +40,11 @@ export const nb = {
     langOptionPl: 'Polski',
     langOptionNb: 'Norsk (bokmål)',
     canvasAriaLabel:
-      'Kart over koblinger mellom arkivakter. Bruk musen eller bytt til listen for tastaturnavigasjon.',
+      'Koblingskart for arkivakter. Bruk piltastene på kartet, musen eller listen for å navigere.',
+    graphKeyboardHelp:
+      'Venstre- og høyrepiltast flytter mellom synlige noder. Enter åpner akten.',
+    graphLiveNode: 'Node: {title}.',
+    graphLiveNoNodes: 'Ingen synlige oppføringer med gjeldende datofilter.',
   },
   archiveById: {
     'apz-01': {

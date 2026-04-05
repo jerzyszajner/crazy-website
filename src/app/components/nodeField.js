@@ -1,4 +1,4 @@
-import { getArchive, getDateRange } from '../../content/archive.js';
+import { getArchive, getDateRange, getEntry } from '../../content/archive.js';
 import { getBundle } from '../../i18n/bundles.js';
 import { getState, subscribe } from '../state.js';
 
@@ -8,7 +8,7 @@ import { getState, subscribe } from '../state.js';
 
 /**
  * @param {HTMLCanvasElement} canvas
- * @param {{ onNodeActivate: (id: string) => void }} opts
+ * @param {{ onNodeActivate: (id: string) => void, liveRegion?: HTMLElement }} opts
  */
 export function mountNodeField(canvas, opts) {
   const ctx = canvas.getContext('2d');
@@ -18,11 +18,14 @@ export function mountNodeField(canvas, opts) {
 
   const { min, max } = getDateRange();
   const span = max - min || 1;
+  const liveRegion = opts.liveRegion;
 
   /** @type {PlacedNode[]} */
   let placed = [];
   /** @type {string | null} */
   let hoveredId = null;
+  /** @type {string | null} */
+  let keyboardFocusId = null;
   let ro = /** @type {ResizeObserver | null} */ (null);
   let unsub = () => {};
 
@@ -53,6 +56,44 @@ export function mountNodeField(canvas, opts) {
     return new Date(entry.date).getTime() <= cutoff;
   }
 
+  /** @param {number} timeT */
+  function visibleInOrder(timeT) {
+    return placed
+      .filter((p) => isVisible(p.entry, timeT))
+      .sort((a, b) => a.index - b.index);
+  }
+
+  function ensureKeyboardFocusValid() {
+    const { timeT } = getState();
+    const vis = visibleInOrder(timeT);
+    if (vis.length === 0) {
+      keyboardFocusId = null;
+      return;
+    }
+    if (!keyboardFocusId || !vis.some((p) => p.id === keyboardFocusId)) {
+      keyboardFocusId = vis[0].id;
+    }
+  }
+
+  function announceFocus() {
+    if (!liveRegion) return;
+    const ui = getBundle(getState().locale).ui;
+    const entry = keyboardFocusId ? getEntry(keyboardFocusId) : null;
+    const nodePart = entry
+      ? ui.graphLiveNode.replace('{title}', entry.title)
+      : ui.graphLiveNoNodes;
+    liveRegion.textContent = `${ui.graphKeyboardHelp} ${nodePart}`;
+  }
+
+  function announceNodeMove() {
+    if (!liveRegion) return;
+    const ui = getBundle(getState().locale).ui;
+    const entry = keyboardFocusId ? getEntry(keyboardFocusId) : null;
+    liveRegion.textContent = entry
+      ? ui.graphLiveNode.replace('{title}', entry.title)
+      : ui.graphLiveNoNodes;
+  }
+
   function draw() {
     const dpr = window.devicePixelRatio || 1;
     const w = canvas.width / dpr;
@@ -61,8 +102,11 @@ export function mountNodeField(canvas, opts) {
     ctx.clearRect(0, 0, w, h);
 
     const { timeT, selectedId, locale } = getState();
+    ensureKeyboardFocusValid();
+
     canvas.setAttribute('aria-label', getBundle(locale).ui.canvasAriaLabel);
     const reduceMotion = document.documentElement.classList.contains('reduce-motion');
+    const canvasFocused = document.activeElement === canvas;
 
     const byId = new Map(placed.map((p) => [p.id, p]));
 
@@ -87,9 +131,11 @@ export function mountNodeField(canvas, opts) {
       const vis = isVisible(p.entry, timeT);
       const alpha = vis ? 1 : 0.14;
       const sel = p.id === selectedId;
+      const kbd = p.id === keyboardFocusId && canvasFocused;
       const hov = p.id === hoveredId;
       let rad = p.r;
       if (sel) rad += 5;
+      else if (kbd) rad += 4;
       else if (hov) rad += 3;
       if (sel && !reduceMotion) rad += Math.sin(tPulse * 3) * 1.2;
 
@@ -97,7 +143,7 @@ export function mountNodeField(canvas, opts) {
       ctx.fillStyle = vis
         ? sel
           ? 'rgba(60,255,154,0.95)'
-          : hov
+          : kbd || hov
             ? 'rgba(30,224,194,0.85)'
             : 'rgba(110,143,130,0.55)'
         : 'rgba(80,90,88,0.25)';
@@ -109,6 +155,13 @@ export function mountNodeField(canvas, opts) {
         ctx.strokeStyle = 'rgba(30,224,194,0.9)';
         ctx.lineWidth = 2;
         ctx.stroke();
+        ctx.lineWidth = 1;
+      } else if (kbd) {
+        ctx.strokeStyle = 'rgba(60,255,154,0.95)';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 3]);
+        ctx.stroke();
+        ctx.setLineDash([]);
         ctx.lineWidth = 1;
       }
       ctx.globalAlpha = 1;
@@ -182,9 +235,63 @@ export function mountNodeField(canvas, opts) {
     if (p) opts.onNodeActivate(p.id);
   }
 
+  /** @param {KeyboardEvent} ev */
+  function onKeyDown(ev) {
+    if (document.activeElement !== canvas) return;
+
+    const { timeT } = getState();
+    const vis = visibleInOrder(timeT);
+    if (vis.length === 0) return;
+
+    if (ev.key === 'ArrowRight' || ev.key === 'ArrowDown') {
+      ev.preventDefault();
+      ensureKeyboardFocusValid();
+      let i = vis.findIndex((p) => p.id === keyboardFocusId);
+      if (i < 0) i = 0;
+      i = (i + 1) % vis.length;
+      keyboardFocusId = vis[i].id;
+      announceNodeMove();
+      draw();
+      return;
+    }
+
+    if (ev.key === 'ArrowLeft' || ev.key === 'ArrowUp') {
+      ev.preventDefault();
+      ensureKeyboardFocusValid();
+      let i = vis.findIndex((p) => p.id === keyboardFocusId);
+      if (i < 0) i = 0;
+      i = (i - 1 + vis.length) % vis.length;
+      keyboardFocusId = vis[i].id;
+      announceNodeMove();
+      draw();
+      return;
+    }
+
+    if (ev.key === 'Enter' || ev.key === ' ') {
+      ensureKeyboardFocusValid();
+      if (keyboardFocusId) {
+        ev.preventDefault();
+        opts.onNodeActivate(keyboardFocusId);
+      }
+    }
+  }
+
+  function onFocus() {
+    ensureKeyboardFocusValid();
+    announceFocus();
+    draw();
+  }
+
+  function onBlur() {
+    draw();
+  }
+
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerleave', onPointerLeave);
   canvas.addEventListener('click', onClick);
+  canvas.addEventListener('keydown', onKeyDown);
+  canvas.addEventListener('focus', onFocus);
+  canvas.addEventListener('blur', onBlur);
   canvas.setAttribute('role', 'img');
 
   ro = new ResizeObserver(() => resize());
@@ -199,6 +306,9 @@ export function mountNodeField(canvas, opts) {
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('click', onClick);
+      canvas.removeEventListener('keydown', onKeyDown);
+      canvas.removeEventListener('focus', onFocus);
+      canvas.removeEventListener('blur', onBlur);
       ro?.disconnect();
       unsub();
     },

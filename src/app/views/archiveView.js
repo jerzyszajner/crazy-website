@@ -76,7 +76,8 @@ export function mountArchiveView(root, opts) {
           data-graph-wrap
           class="relative min-h-[min(72vh,640px)] overflow-hidden rounded-2xl border border-apz-line bg-apz-surface/40 shadow-[inset_0_0_80px_rgba(0,0,0,0.35)]"
         >
-          <canvas class="absolute inset-0 block h-full w-full touch-none" data-canvas></canvas>
+          <p class="sr-only" aria-live="polite" aria-atomic="true" data-graph-live></p>
+          <canvas class="absolute inset-0 block h-full w-full touch-none" tabindex="0" data-canvas></canvas>
           <div class="pointer-events-none absolute left-4 top-4 max-w-[min(90%,280px)] rounded-lg border border-apz-line/80 bg-apz-bg/70 px-3 py-2 text-[11px] text-apz-muted backdrop-blur-sm" data-i18n="graphHint"></div>
         </div>
 
@@ -102,9 +103,11 @@ export function mountArchiveView(root, opts) {
   const modeGraph = /** @type {HTMLButtonElement | null} */ (root.querySelector('[data-mode="graph"]'));
   const modeList = /** @type {HTMLButtonElement | null} */ (root.querySelector('[data-mode="list"]'));
   const langSelect = /** @type {HTMLSelectElement | null} */ (root.querySelector('#apz-lang-select'));
+  const graphLive = /** @type {HTMLElement | null} */ (root.querySelector('[data-graph-live]'));
 
   const nodeApi = mountNodeField(canvas, {
     onNodeActivate: (id) => opts.onNavigateToAct(id),
+    liveRegion: graphLive ?? undefined,
   });
 
   const scrubApi = mountTimeScrubber(/** @type {HTMLElement} */ (scrubSlot));
@@ -127,6 +130,9 @@ export function mountArchiveView(root, opts) {
     modeGraph?.classList.toggle('text-apz-accent', !listMode);
     modeList?.classList.toggle('border-apz-accent', listMode);
     modeList?.classList.toggle('text-apz-accent', listMode);
+    modeGraph?.setAttribute('aria-pressed', listMode ? 'false' : 'true');
+    modeList?.setAttribute('aria-pressed', listMode ? 'true' : 'false');
+    canvas?.setAttribute('tabindex', listMode ? '-1' : '0');
     if (!listMode) nodeApi.requestDraw();
   }
 

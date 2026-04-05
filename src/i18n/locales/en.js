@@ -41,7 +41,11 @@ export const en = {
     langOptionPl: 'Polski',
     langOptionNb: 'Norsk (bokmål)',
     canvasAriaLabel:
-      'Map of connections between archive records. Use the mouse or switch to the list for keyboard navigation.',
+      'Connection map of archive records. Use arrow keys on the map, the mouse, or the list to navigate.',
+    graphKeyboardHelp:
+      'Left and right arrows move between visible nodes. Enter opens the record.',
+    graphLiveNode: 'Node: {title}.',
+    graphLiveNoNodes: 'No records visible at the current date filter.',
   },
   archiveById: {
     'apz-01': {

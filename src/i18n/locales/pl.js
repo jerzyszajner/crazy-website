@@ -43,7 +43,11 @@ export const pl = {
     langOptionPl: 'Polski',
     langOptionNb: 'Norsk (bokmål)',
     canvasAriaLabel:
-      'Mapa powiązań aktów archiwum. Użyj myszy lub przełącz się na listę dla nawigacji klawiaturą.',
+      'Mapa powiązań aktów archiwum. Użyj strzałek na mapie, myszy albo listy, by nawigować.',
+    graphKeyboardHelp:
+      'Strzałki w lewo i w prawo przechodzą między widocznymi węzłami. Enter otwiera akt.',
+    graphLiveNode: 'Węzeł: {title}.',
+    graphLiveNoNodes: 'Brak widocznych aktów przy obecnym filtrze daty.',
   },
   archiveById: {
     'apz-01': {
