@@ -1,12 +1,12 @@
 ---
-description: Eksperymentalny UI musi mieć równoważnik dostępny i szanować motion preferences.
+description: Experimental UI must have an accessible equivalent and respect motion preferences.
 globs: src/**/*.{js,html,css}
 alwaysApply: false
 ---
 
-# Dostępność przy nietypowym UI
+# Accessibility with non-standard UI
 
-- Każda niestandardowa interakcja (canvas, graf) ma **równoważnik**: tryb listy / przyciski / focus visible — patrz komponenty w `src/app/components/`.
-- Szanuj `prefers-reduced-motion`: klasa `reduce-motion` na `documentElement` jest ustawiana w [`src/main.js`](src/main.js); animacje dekoracyjne wyłączaj lub skracaj w CSS (`html.reduce-motion`).
-- Zmiany treści istotne dla użytkownika ogłaszaj przez **`aria-live`** tam, gdzie to ma sens (np. panel szczegółów).
-- Zachowaj **link „przejdź do treści”** w [`index.html`](index.html) i sensowną hierarchię nagłówków.
+- Every custom interaction (canvas, graph) must have an **accessible equivalent**: list mode / buttons / focus visible — see components in `src/app/components/`.
+- Respect `prefers-reduced-motion`: the `reduce-motion` class on `documentElement` is set in [`src/main.js`](src/main.js); disable or shorten decorative animations in CSS (`html.reduce-motion`).
+- Announce content changes relevant to the user via **`aria-live`** where appropriate (e.g. detail panel).
+- Keep the **skip link** in [`index.html`](index.html) and a sensible heading hierarchy.

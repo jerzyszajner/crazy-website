@@ -1,11 +1,11 @@
 ---
-description: Tailwind v4 + tokeny wizualne w CSS (zmienne, warstwy).
+description: Tailwind v4 + visual design tokens in CSS (variables, layers).
 globs: src/**/*.{css,js,html}
 alwaysApply: false
 ---
 
-# Tailwind i tokeny
+# Tailwind and tokens
 
-- Kolory, fonty i odstępy instytucji wizualnej definiuj w [`src/styles/main.css`](src/styles/main.css) przez `@theme` i/lub zmienne CSS; w markupie preferuj klasy Tailwind odwołujące się do tych tokenów (`bg-apz-*`, `text-apz-*`, itd.).
-- Unikaj inline `style=""` poza **Canvas** i niezbędnymi wartościami dynamicznymi.
-- Klasy dodawane z JavaScript muszą być **literałami rozpoznawalnymi przez skaner** albo zdefiniuj je w CSS (np. `.apz-scrub-span-2`), żeby nie ginęły przy buildzie.
+- Define colors, fonts, and spacing for the visual identity in [`src/styles/main.css`](src/styles/main.css) via `@theme` and/or CSS variables; in markup prefer Tailwind classes referencing those tokens (`bg-apz-*`, `text-apz-*`, etc.).
+- Avoid inline `style=""` except on **Canvas** and necessary dynamic values.
+- Classes added from JavaScript must be **literals recognizable by the scanner** or defined in CSS (e.g. `.apz-scrub-span-2`) so they are not purged at build time.

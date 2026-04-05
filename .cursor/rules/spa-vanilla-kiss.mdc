@@ -1,12 +1,12 @@
 ---
-description: Architektura SPA w vanilla JS — router, widoki, prosty stan.
+description: Vanilla JS SPA architecture — router, views, simple state.
 globs: src/**/*.js
 alwaysApply: false
 ---
 
-# SPA vanilla (KISS)
+# Vanilla SPA (KISS)
 
-- Jeden **hash router** w [`src/app/router.js`](src/app/router.js); trasy zmieniają stan, **bez** przeładowywania całego drzewa widoku przy każdym `hashchange` (jeden mount głównego widoku).
-- Widoki w `src/app/views/` eksportują `mountX(root, opts)` zwracający `{ unmount() }`; w `unmount` sprzątaj listenery, `ResizeObserver` i subskrypcje.
-- Stan aplikacji w [`src/app/state.js`](src/app/state.js): małe API (`getState`, `subscribe`, `set…`), bez frameworka.
-- Jedna odpowiedzialność na plik; unikaj globalnych zmiennych poza modułem stanu i routerem.
+- One **hash router** in [`src/app/router.js`](src/app/router.js); routes change state, **without** re-mounting the entire view tree on every `hashchange` (single main view mount).
+- Views in `src/app/views/` export `mountX(root, opts)` returning `{ unmount() }`; clean up listeners, `ResizeObserver`, and subscriptions in `unmount`.
+- App state in [`src/app/state.js`](src/app/state.js): small API (`getState`, `subscribe`, `set…`), no framework.
+- One responsibility per file; avoid global variables outside the state module and router.
