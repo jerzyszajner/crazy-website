@@ -1,0 +1,14 @@
+---
+description: Przy zmianach zależności i konfiguracji bibliotek używaj Context7 (MCP) do aktualnej dokumentacji.
+alwaysApply: true
+---
+
+# Context7 (dokumentacja)
+
+Gdy dodajesz lub aktualizujesz zależności npm, edytujesz `vite.config.js`, Tailwind, ESLint albo integrujesz nową bibliotekę:
+
+1. Wywołaj narzędzie MCP **resolve-library-id** z nazwą pakietu i kontekstem zadania.
+2. Następnie **query-docs** z wybranym `libraryId` i konkretnym pytaniem (konfiguracja, API, migracja).
+3. Nie opieraj się wyłącznie na pamięci modelu — dokumentacja w repozytoriach bywa nowsza niż trening.
+
+Nie używaj Context7 do czystego refaktoryzowania logiki domenowej ani przeglądu kodu bez odniesienia do dokumentacji zewnętrznej.
