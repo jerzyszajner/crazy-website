@@ -1,0 +1,107 @@
+import { getEntry } from '../../content/archive.js';
+import { getState, subscribe } from '../state.js';
+
+/**
+ * @param {HTMLElement} root
+ * @param {{ onClose: () => void }} opts
+ */
+export function mountDetailPanel(root, opts) {
+  root.classList.add('min-h-[200px]');
+
+  root.innerHTML = `
+    <div
+      class="pointer-events-none invisible flex h-full min-h-[40vh] flex-col border-apz-line opacity-0 transition-[opacity,visibility] duration-300 lg:border-l lg:pl-6"
+      data-panel
+      aria-live="polite"
+    >
+      <div class="pointer-events-auto flex flex-1 flex-col rounded-2xl border border-apz-line bg-apz-surface/90 p-5 shadow-[0_0_40px_rgba(60,255,154,0.06)] backdrop-blur-md">
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p class="text-[10px] uppercase tracking-[0.35em] text-apz-muted">Akt archiwalny</p>
+            <h2 class="font-display mt-1 text-xl font-bold leading-tight text-apz-ink md:text-2xl" data-title></h2>
+            <p class="mt-1 font-mono text-xs text-apz-glow" data-date></p>
+          </div>
+          <button
+            type="button"
+            class="shrink-0 rounded-lg border border-apz-line px-2 py-1 text-xs text-apz-muted transition hover:border-apz-accent hover:text-apz-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-apz-accent"
+            data-close
+            aria-label="Zamknij panel szczegółów"
+          >
+            Zamknij
+          </button>
+        </div>
+        <p class="text-sm leading-relaxed text-apz-muted" data-excerpt></p>
+        <div class="my-4 h-px w-full bg-apz-line"></div>
+        <div class="flex-1 overflow-y-auto text-sm leading-relaxed text-apz-ink/95" data-body></div>
+        <p class="mt-4 text-[11px] text-apz-muted" data-related></p>
+      </div>
+    </div>
+  `;
+
+  const wrap = /** @type {HTMLElement} */ (root.querySelector('[data-panel]'));
+  const titleEl = root.querySelector('[data-title]');
+  const dateEl = root.querySelector('[data-date]');
+  const excerptEl = root.querySelector('[data-excerpt]');
+  const bodyEl = root.querySelector('[data-body]');
+  const relatedEl = root.querySelector('[data-related]');
+  const closeBtn = /** @type {HTMLButtonElement | null} */ (root.querySelector('[data-close]'));
+
+  function render() {
+    const { selectedId } = getState();
+    const entry = selectedId ? getEntry(selectedId) : null;
+
+    if (!entry) {
+      root.classList.add('hidden', 'lg:hidden');
+      wrap.classList.add('invisible', 'opacity-0', 'pointer-events-none');
+      wrap.classList.remove('apz-panel-enter');
+      titleEl.textContent = '';
+      dateEl.textContent = '';
+      excerptEl.textContent = '';
+      bodyEl.textContent = '';
+      relatedEl.textContent = '';
+      return;
+    }
+
+    root.classList.remove('hidden', 'lg:hidden');
+
+    wrap.classList.remove('invisible', 'opacity-0', 'pointer-events-none');
+    wrap.classList.remove('apz-panel-enter');
+    // reflow trick to restart animation
+    void wrap.offsetWidth;
+    if (!document.documentElement.classList.contains('reduce-motion')) {
+      wrap.classList.add('apz-panel-enter');
+    }
+
+    titleEl.textContent = entry.title;
+    dateEl.textContent = entry.date;
+    excerptEl.textContent = entry.excerpt;
+    bodyEl.textContent = entry.body;
+
+    const related = entry.relatedIds
+      .map((id) => getEntry(id))
+      .filter(Boolean)
+      .map((e) => e.title);
+    relatedEl.textContent =
+      related.length > 0
+        ? `Powiązane ślady: ${related.join(' · ')}`
+        : 'Brak powiązań w grafie dla tego aktu.';
+  }
+
+  function handleClose() {
+    opts.onClose();
+  }
+
+  closeBtn?.addEventListener('click', handleClose);
+
+  const unsub = subscribe(render);
+  render();
+
+  return {
+    destroy() {
+      closeBtn?.removeEventListener('click', handleClose);
+      unsub();
+      root.classList.remove('min-h-[200px]', 'hidden', 'lg:hidden');
+      root.innerHTML = '';
+    },
+  };
+}
