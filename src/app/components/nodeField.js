@@ -235,6 +235,28 @@ export function mountNodeField(canvas, opts) {
     if (p) opts.onNodeActivate(p.id);
   }
 
+  /** @type {{ x: number, y: number } | null} */
+  let touchStartPos = null;
+
+  function onTouchStart(ev) {
+    if (ev.touches.length !== 1) return;
+    touchStartPos = { x: ev.touches[0].clientX, y: ev.touches[0].clientY };
+  }
+
+  function onTouchEnd(ev) {
+    if (!touchStartPos || ev.changedTouches.length !== 1) return;
+    const t = ev.changedTouches[0];
+    const dx = t.clientX - touchStartPos.x;
+    const dy = t.clientY - touchStartPos.y;
+    touchStartPos = null;
+    if (Math.sqrt(dx * dx + dy * dy) > 8) return; // was a scroll, not a tap
+    const p = pickNode(t.clientX, t.clientY);
+    if (p) {
+      ev.preventDefault();
+      opts.onNodeActivate(p.id);
+    }
+  }
+
   /** @param {KeyboardEvent} ev */
   function onKeyDown(ev) {
     if (document.activeElement !== canvas) return;
@@ -286,9 +308,12 @@ export function mountNodeField(canvas, opts) {
     draw();
   }
 
+  canvas.style.touchAction = 'pan-x pan-y';
   canvas.addEventListener('pointermove', onPointerMove);
   canvas.addEventListener('pointerleave', onPointerLeave);
   canvas.addEventListener('click', onClick);
+  canvas.addEventListener('touchstart', onTouchStart, { passive: true });
+  canvas.addEventListener('touchend', onTouchEnd, { passive: false });
   canvas.addEventListener('keydown', onKeyDown);
   canvas.addEventListener('focus', onFocus);
   canvas.addEventListener('blur', onBlur);
@@ -306,6 +331,8 @@ export function mountNodeField(canvas, opts) {
       canvas.removeEventListener('pointermove', onPointerMove);
       canvas.removeEventListener('pointerleave', onPointerLeave);
       canvas.removeEventListener('click', onClick);
+      canvas.removeEventListener('touchstart', onTouchStart);
+      canvas.removeEventListener('touchend', onTouchEnd);
       canvas.removeEventListener('keydown', onKeyDown);
       canvas.removeEventListener('focus', onFocus);
       canvas.removeEventListener('blur', onBlur);
