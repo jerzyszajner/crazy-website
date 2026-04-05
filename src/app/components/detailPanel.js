@@ -1,4 +1,5 @@
 import { getEntry } from '../../content/archive.js';
+import { getBundle } from '../../i18n/bundles.js';
 import { getState, subscribe } from '../state.js';
 
 /**
@@ -17,7 +18,7 @@ export function mountDetailPanel(root, opts) {
       <div class="pointer-events-auto flex flex-1 flex-col rounded-2xl border border-apz-line bg-apz-surface/90 p-5 shadow-[0_0_40px_rgba(60,255,154,0.06)] backdrop-blur-md">
         <div class="mb-4 flex items-start justify-between gap-3">
           <div>
-            <p class="text-[10px] uppercase tracking-[0.35em] text-apz-muted">Akt archiwalny</p>
+            <p class="text-[10px] uppercase tracking-[0.35em] text-apz-muted" data-panel-kicker></p>
             <h2 class="font-display mt-1 text-xl font-bold leading-tight text-apz-ink md:text-2xl" data-title></h2>
             <p class="mt-1 font-mono text-xs text-apz-glow" data-date></p>
           </div>
@@ -25,10 +26,7 @@ export function mountDetailPanel(root, opts) {
             type="button"
             class="shrink-0 rounded-lg border border-apz-line px-2 py-1 text-xs text-apz-muted transition hover:border-apz-accent hover:text-apz-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-apz-accent"
             data-close
-            aria-label="Zamknij panel szczegółów"
-          >
-            Zamknij
-          </button>
+          ></button>
         </div>
         <p class="text-sm leading-relaxed text-apz-muted" data-excerpt></p>
         <div class="my-4 h-px w-full bg-apz-line"></div>
@@ -39,6 +37,7 @@ export function mountDetailPanel(root, opts) {
   `;
 
   const wrap = /** @type {HTMLElement} */ (root.querySelector('[data-panel]'));
+  const kickerEl = root.querySelector('[data-panel-kicker]');
   const titleEl = root.querySelector('[data-title]');
   const dateEl = root.querySelector('[data-date]');
   const excerptEl = root.querySelector('[data-excerpt]');
@@ -47,6 +46,13 @@ export function mountDetailPanel(root, opts) {
   const closeBtn = /** @type {HTMLButtonElement | null} */ (root.querySelector('[data-close]'));
 
   function render() {
+    const ui = getBundle(getState().locale).ui;
+    if (kickerEl) kickerEl.textContent = ui.panelKicker;
+    if (closeBtn) {
+      closeBtn.textContent = ui.close;
+      closeBtn.setAttribute('aria-label', ui.closeAria);
+    }
+
     const { selectedId } = getState();
     const entry = selectedId ? getEntry(selectedId) : null;
 
@@ -82,9 +88,7 @@ export function mountDetailPanel(root, opts) {
       .filter(Boolean)
       .map((e) => e.title);
     relatedEl.textContent =
-      related.length > 0
-        ? `Powiązane ślady: ${related.join(' · ')}`
-        : 'Brak powiązań w grafie dla tego aktu.';
+      related.length > 0 ? `${ui.relatedPrefix}${related.join(' · ')}` : ui.noRelated;
   }
 
   function handleClose() {

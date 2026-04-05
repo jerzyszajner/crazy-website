@@ -1,4 +1,5 @@
-import { archive, getDateRange } from '../../content/archive.js';
+import { getArchive, getDateRange } from '../../content/archive.js';
+import { getBundle } from '../../i18n/bundles.js';
 import { getState, subscribe } from '../state.js';
 
 /**
@@ -11,15 +12,15 @@ export function mountListFallback(root, opts) {
 
   root.innerHTML = `
     <div class="rounded-xl border border-apz-line bg-apz-elevated/60 p-4 backdrop-blur-sm">
-      <h3 class="font-display text-sm font-semibold text-apz-ink">Lista aktów (dostępna ścieżka)</h3>
-      <p class="mt-1 text-xs text-apz-muted">
-        Nawigacja klawiaturą i czytnikami: wybierz akt z listy — odpowiada węzłowi na mapie powiązań.
-      </p>
+      <h3 class="font-display text-sm font-semibold text-apz-ink" data-list-heading></h3>
+      <p class="mt-1 text-xs text-apz-muted" data-list-desc></p>
       <ul class="mt-3 max-h-[40vh] space-y-2 overflow-y-auto pr-1" role="list" data-list></ul>
     </div>
   `;
 
   const listEl = /** @type {HTMLUListElement | null} */ (root.querySelector('[data-list]'));
+  const headingEl = root.querySelector('[data-list-heading]');
+  const descEl = root.querySelector('[data-list-desc]');
 
   function visibleByTime(dateStr, timeT) {
     const cutoff = min + timeT * span;
@@ -27,10 +28,14 @@ export function mountListFallback(root, opts) {
   }
 
   function render() {
+    const ui = getBundle(getState().locale).ui;
+    if (headingEl) headingEl.textContent = ui.listHeading;
+    if (descEl) descEl.textContent = ui.listDescription;
+
     const { timeT, selectedId } = getState();
     if (!listEl) return;
 
-    const items = archive
+    const items = getArchive()
       .filter((e) => visibleByTime(e.date, timeT))
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 

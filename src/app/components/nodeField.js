@@ -1,8 +1,9 @@
-import { archive, getDateRange } from '../../content/archive.js';
+import { getArchive, getDateRange } from '../../content/archive.js';
+import { getBundle } from '../../i18n/bundles.js';
 import { getState, subscribe } from '../state.js';
 
 /**
- * @typedef {{ id: string, x: number, y: number, r: number, entry: import('../../content/archive.js').ArchiveEntry }} PlacedNode
+ * @typedef {{ id: string, x: number, y: number, r: number, index: number, entry: import('../../content/archive.js').ArchiveEntry }} PlacedNode
  */
 
 /**
@@ -28,9 +29,10 @@ export function mountNodeField(canvas, opts) {
   function layoutNodes(w, h) {
     const cx = w / 2;
     const cy = h / 2;
-    const n = archive.length;
+    const arch = getArchive();
+    const n = arch.length;
     const baseR = Math.min(w, h) * 0.28;
-    placed = archive.map((entry, i) => {
+    placed = arch.map((entry, i) => {
       const t = i / n;
       const angle = t * Math.PI * 2 + 0.35;
       const ripple = (i % 4) * 14;
@@ -40,6 +42,7 @@ export function mountNodeField(canvas, opts) {
         x: cx + Math.cos(angle) * r,
         y: cy + Math.sin(angle) * r,
         r: 14,
+        index: i,
         entry,
       };
     });
@@ -57,7 +60,8 @@ export function mountNodeField(canvas, opts) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, w, h);
 
-    const { timeT, selectedId } = getState();
+    const { timeT, selectedId, locale } = getState();
+    canvas.setAttribute('aria-label', getBundle(locale).ui.canvasAriaLabel);
     const reduceMotion = document.documentElement.classList.contains('reduce-motion');
 
     const byId = new Map(placed.map((p) => [p.id, p]));
@@ -114,7 +118,7 @@ export function mountNodeField(canvas, opts) {
         ctx.font = '600 10px "IBM Plex Mono", monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        const label = String(archive.indexOf(p.entry) + 1).padStart(2, '0');
+        const label = String(p.index + 1).padStart(2, '0');
         ctx.fillText(label, p.x, p.y);
       }
     }
@@ -182,10 +186,6 @@ export function mountNodeField(canvas, opts) {
   canvas.addEventListener('pointerleave', onPointerLeave);
   canvas.addEventListener('click', onClick);
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute(
-    'aria-label',
-    'Mapa powiązań aktów archiwum. Użyj myszy lub przełącz się na listę dla nawigacji klawiaturą.',
-  );
 
   ro = new ResizeObserver(() => resize());
   if (canvas.parentElement) ro.observe(canvas.parentElement);
