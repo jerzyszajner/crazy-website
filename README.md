@@ -1,5 +1,7 @@
 # APZ — Archive of Coincidental Convergences
 
+**Live:** https://crazy-website-js.netlify.app
+
 Sandbox for experimenting with **autonomous, end-to-end website building** (AI-assisted design, structure, and implementation). The repository folder is `crazy-website`; the npm package name is `apz-archive`.
 
 ## What it is
